@@ -1,4 +1,10 @@
-# blank-nuxt
+# Agora
+
+- Clone including submodules
+  `git clone --recurse-submodules git@github.com:itswadesh/agora.git`
+
+- Update submodules after clone
+  `git submodule update --init --recursive`
 
 > My well-made Nuxt.js project
 

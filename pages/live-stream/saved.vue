@@ -5,9 +5,8 @@
       <MobileNavBar class="md:hidden" />
       <div class="container mx-2">
         <h1 class="my-4 text-3xl font-bold text-center text-secondary-500">
-          Live Streams
+          Saved Videos
         </h1>
-        {{ remoteStreams }}
         <div class="grid mb-8 lg:grid-cols-3 xl:grid-cols-5">
           <div
             :key="index"
@@ -16,26 +15,43 @@
           >
             <h3 class="mb-2 text-gray-600">{{ remoteStream.getId() }}</h3>
             <StreamPlayer
-              class="w-full h-64"
+              class="w-full"
               :stream="remoteStream"
               :domId="remoteStream.getId()"
             ></StreamPlayer>
           </div>
         </div>
+        <div class="" v-if="myLiveStreams && myLiveStreams.length > 0">
+          <div class="mb-2 text-2xl font-bold text-primary-500">
+            <div>Scheduled</div>
+          </div>
+          <div class="grid gap-4 lg:grid-cols-3 xl:grid-cols-5">
+            <div
+              v-for="item in myLiveStreams"
+              class="px-4 py-2 bg-white rounded shadow"
+              :key="item.title"
+            >
+              <div>
+                <div v-text="item.title" class="text-gray-800"></div>
+              </div>
+              <div>
+                <div class="text-xs text-gray-300">
+                  {{ item.scheduleDateTime | date }}
+                </div>
+              </div>
+              <div>
+                <img :src="item.imageUrl" alt="" />
+              </div>
+            </div>
+          </div>
+        </div>
         <button
-          class="px-4 py-2 text-white bg-green-500 border"
+          class="px-4 py-2 border text-primary-500"
           type="button"
           @click="joinEvent"
           :disabled="disableJoin"
         >
           join
-        </button>
-        <button
-          class="px-4 py-2 text-white bg-red-500"
-          @click="leaveEvent"
-          :disabled="!disableJoin"
-        >
-          leave
         </button>
       </div>
     </div>
@@ -45,17 +61,18 @@
 <script>
 import Nav from '~/components/HomePage/Nav'
 import MobileNavBar from '~/components/HomePage/MobileNavBar'
+
 import RTCClient from './agora-rtc-client'
-import { log } from './config'
+
 import StreamPlayer from '~/components/Video/stream-player'
 import MY_LIVE_STREAMS from '~/gql/liveStream/myLiveStreams.gql'
-import RTC_TOKEN from '~/gql/liveStream/rtcToken.gql'
 
 export default {
   asyncData({ env }) {
-    const { AGORA_APP_ID, AGORA_LOG, AGORA_CHANNEL_NAME } = env
+    const { AGORA_APP_ID, AGORA_APP_TOKEN, AGORA_LOG, AGORA_CHANNEL_NAME } = env
     return {
       AGORA_APP_ID,
+      AGORA_APP_TOKEN,
       AGORA_LOG,
       AGORA_CHANNEL_NAME,
     }
@@ -70,9 +87,9 @@ export default {
       option: {
         appid: '',
         token: '',
-        uid: 0,
-        channel: 'litekart',
-        role: 'host',
+        uid: null,
+        channel: '',
+        role: 'audience',
       },
       disableJoin: false,
       localStream: null,
@@ -85,47 +102,54 @@ export default {
   },
 
   methods: {
-    async joinEvent() {
-      this.option.appid = this.AGORA_APP_ID
-      const channel = (this.option.channel = this.AGORA_CHANNEL_NAME)
-      try {
-        this.loading = true
-        const rtcTokenObject = (
-          await this.$apollo.query({
-            query: RTC_TOKEN,
-            variables: { isPublisher: true, channel },
-            fetchPolicy: 'no-cache',
-          })
-        ).data.rtcToken
-        this.option.token = rtcTokenObject.token
-        this.option.uid = rtcTokenObject.uid
-      } catch (e) {
-        console.log(e)
-      } finally {
-        this.loading = false
-      }
+    joinEvent() {
+      this.option.appid = process.env.AGORA_APP_ID
+      this.option.token = process.env.AGORA_APP_TOKEN
+      this.option.channel = process.env.AGORA_CHANNEL_NAME
       console.log('this option data is:', this.option)
-      // if (this.option.role == 'host') {
-      this.rtc
-        .joinChannelAsHost(this.option)
-        .then(() => {
-          console.log('Join Success')
-          this.rtc
-            .publishStream()
-            .then((stream) => {
-              console.log('Publish Success')
-              this.localStream = stream
-            })
-            .catch((err) => {
-              console.log('the error is', err)
-              console.log('Publish Failure')
-              log('publish local error', err)
-            })
-        })
-        .catch((err) => {
-          console.log('the error is', err)
-          log('join channel error', err)
-        })
+      if (this.option.role == 'host') {
+        this.rtc
+          .joinChannelAsHost(this.option)
+          .then(() => {
+            // this.$message({
+            //   message: 'Join Success',
+            //   type: 'success',
+            // })
+            this.rtc
+              .publishStream()
+              .then((stream) => {
+                // this.$message({
+                //   message: 'Publish Success',
+                //   type: 'success',
+                // })
+                this.localStream = stream
+              })
+              .catch((err) => {
+                console.log('the error is', err)
+                console.log('Publish Failure')
+                console.log('publish local error', err)
+              })
+          })
+          .catch((err) => {
+            console.log('the error is', err)
+            console.log('Join Failure')
+            console.log('join channel error', err)
+          })
+      } else {
+        this.rtc
+          .joinChannelAsAudience(this.option)
+          .then(() => {
+            // this.$message({
+            //   message: 'Join Success',
+            //   type: 'success',
+            // })
+          })
+          .catch((err) => {
+            console.log('the error is', err)
+            console.log('Join Failure')
+            console.log('join channel error', err)
+          })
+      }
       this.disableJoin = true
     },
 
@@ -134,19 +158,24 @@ export default {
       this.rtc
         .leaveChannel()
         .then(() => {
-          console.log('Leave Success')
+          // this.$message({
+          //   message: 'Leave Success',
+          //   type: 'success',
+          // })
         })
         .catch((err) => {
           console.log('the error is', err)
           console.log('Leave Failure')
-          log('leave error', err)
+          // log('leave error', err)
         })
       this.localStream = null
       this.remoteStreams = []
     },
 
     judge(detail) {
-      console.log(`Please enter the ${detail}`)
+      console.log('setErr', `Please enter the ${detail}`, {
+        root: true,
+      })
     },
 
     async getData() {
@@ -156,7 +185,6 @@ export default {
           fetchPolicy: 'no-cache',
         })
       ).data.myLiveStreams
-      // console.log('my schduled live stream is', myLiveStreams)
       this.myLiveStreams = myLiveStreams
     },
   },
@@ -165,40 +193,44 @@ export default {
     await this.getData()
     this.rtc = new RTCClient()
     let rtc = this.rtc
-
+    if (process.client) {
+      this.joinEvent()
+    }
     rtc.on('stream-added', (evt) => {
       let { stream } = evt
-      log('[agora] [stream-added] stream-added', stream.getId())
+      // log('[agora] [stream-added] stream-added', stream.getId())
       rtc.client.subscribe(stream)
+      console.log('stream-added')
     })
 
     rtc.on('stream-subscribed', (evt) => {
       let { stream } = evt
-      log('[agora] [stream-subscribed] stream-added', stream.getId())
+      // log('[agora] [stream-subscribed] stream-added', stream.getId())
       if (!this.remoteStreams.find((it) => it.getId() === stream.getId())) {
         this.remoteStreams.push(stream)
       }
+      console.log('stream-subscribed')
     })
 
     rtc.on('stream-removed', (evt) => {
       let { stream } = evt
-      log('[agora] [stream-removed] stream-removed', stream.getId())
+      // log('[agora] [stream-removed] stream-removed', stream.getId())
       this.remoteStreams = this.remoteStreams.filter(
         (it) => it.getId() !== stream.getId()
       )
+      console.log('stream-removed')
     })
 
     rtc.on('peer-online', (evt) => {
-      console.log(`Peer ${evt.uid} is online`)
+      // this.$message(`Peer ${evt.uid} is online`)
     })
 
     rtc.on('peer-leave', (evt) => {
-      console.log(`Peer ${evt.uid} already leave`)
+      // this.$message(`Peer ${evt.uid} already leave`)
       this.remoteStreams = this.remoteStreams.filter(
         (it) => it.getId() !== evt.uid
       )
     })
-    console.log('basic call first page loaded', rtc)
   },
 }
 </script>
