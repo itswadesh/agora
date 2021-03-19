@@ -1,7 +1,7 @@
 {
-  "name": "blank-nuxt",
+  "name": "agora",
   "version": "1.0.0",
-  "description": "My well-made Nuxt.js project",
+  "description": "Agora video calling project",
   "author": "Swadesh Behera",
   "private": true,
   "scripts": {
@@ -11,11 +11,33 @@
     "generate": "nuxt generate"
   },
   "dependencies": {
-    "nuxt": "^2.0.0",
-    "@nuxtjs/pwa": "^3.0.0-0",
-    "@nuxtjs/dotenv": "^1.4.0"
+    "@nuxtjs/dotenv": "^1.4.1",
+    "@nuxtjs/google-analytics": "^2.4.0",
+    "@nuxtjs/pwa": "^3.3.5",
+    "@nuxtjs/robots": "^2.5.0",
+    "@tailwindcss/forms": "^0.2.1",
+    "agora-rtc-sdk": "^3.4.0",
+    "cookie-universal-nuxt": "^2.1.4",
+    "nuxt": "^2.15.3",
+    "tailwindcss-rtl": "^0.7.3"
   },
   "devDependencies": {
-    "@nuxtjs/tailwindcss": "^1.0.0"
+    "@nuxtjs/apollo": "^4.0.1-rc.5",
+    "@nuxtjs/tailwindcss": "^4.0.1",
+    "@tailwindcss/postcss7-compat": "npm:@tailwindcss/postcss7-compat",
+    "eslint": "^7.22.0",
+    "eslint-config-prettier": "^8.1.0",
+    "eslint-plugin-import": "^2.21.2",
+    "eslint-plugin-jest": "^24.3.1",
+    "eslint-plugin-node": "^11.0.0",
+    "eslint-plugin-prettier": "^3.1.4",
+    "eslint-plugin-promise": "^4.3.1",
+    "eslint-plugin-react": "^7.19.0",
+    "eslint-plugin-react-hooks": "^4.0.4",
+    "nuxt-purgecss": "^1.0.0",
+    "nuxt-webfontloader": "^1.1.0",
+    "postcss": "^8.2.8",
+    "prettier": "^2.2.1",
+    "tailwindcss": "npm:@tailwindcss/postcss7-compat"
   }
 }

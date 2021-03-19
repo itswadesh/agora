@@ -1,57 +1,55 @@
+import { HTTP_ENDPOINT, WWW_URL, head, dev, tailwindcss, PORT } from './config'
+const server = dev ? `http://localhost:${PORT}` : WWW_URL
 
+const whitelistPatterns = [/(slick-)/]
 export default {
-  mode: 'universal',
-  /*
-  ** Headers of the page
-  */
-  head: {
-    title: process.env.npm_package_name || '',
-    meta: [
-      { charset: 'utf-8' },
-      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { hid: 'description', name: 'description', content: process.env.npm_package_description || '' }
-    ],
-    link: [
-      { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }
-    ]
-  },
-  /*
-  ** Customize the progress-bar color
-  */
-  loading: { color: '#fff' },
-  /*
-  ** Global CSS
-  */
-  css: [
-  ],
-  /*
-  ** Plugins to load before mounting the App
-  */
-  plugins: [
-  ],
-  /*
-  ** Nuxt.js dev-modules
-  */
+  head,
+  plugins: [{ src: '~/plugins/agora.js', ssr: false }],
+  components: true,
   buildModules: [
-    // Doc: https://github.com/nuxt-community/nuxt-tailwindcss
+    '@nuxtjs/apollo',
     '@nuxtjs/tailwindcss',
+    'nuxt-purgecss',
+    'nuxt-webfontloader',
+    '@nuxtjs/google-analytics'
   ],
-  /*
-  ** Nuxt.js modules
-  */
   modules: [
+    '@nuxtjs/robots',
     '@nuxtjs/pwa',
-    // Doc: https://github.com/nuxt-community/dotenv-module
     '@nuxtjs/dotenv',
+    'cookie-universal-nuxt'
   ],
-  /*
-  ** Build configuration
-  */
-  build: {
-    /*
-    ** You can extend webpack config here
-    */
-    extend (config, ctx) {
+  purgeCSS: {
+    // whitelist,
+    whitelistPatterns
+  },
+  tailwindcss,
+  webfontloader: {
+    google: {
+      families: [
+        'Inter:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap'
+      ]
     }
+  },
+  axios: {
+    browserBaseURL: server
+  },
+  apollo: {
+    clientConfigs: {
+      default: {
+        httpEndpoint: server + '/graphql'
+        // wsEndpoint: server.replace('http', 'ws') + '/graphql',
+      }
+    },
+    defaultOptions: {
+      $query: {
+        loadingKey: 'loading',
+        fetchPolicy: 'cache-and-network'
+      }
+    }
+  },
+  proxy: {
+    '/graphql': HTTP_ENDPOINT,
+    '/api': HTTP_ENDPOINT
   }
 }
